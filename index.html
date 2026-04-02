@@ -15,11 +15,11 @@ html,body{height:100%;background:var(--bg);font-family:'PingFang SC','Microsoft 
 .header-logo span{opacity:0.7;font-weight:400;}
 .header-store{font-size:12px;opacity:0.7;}
 .header-sub{font-size:13px;opacity:0.85;}
-.steps{background:var(--surface);padding:14px 20px;display:flex;gap:0;border-bottom:1px solid var(--border);}
+.steps{background:var(--surface);padding:14px 20px;display:flex;border-bottom:1px solid var(--border);}
 .step{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;position:relative;}
 .step::after{content:'';position:absolute;top:12px;left:60%;width:80%;height:1.5px;background:var(--border);z-index:0;}
 .step:last-child::after{display:none;}
-.step-dot{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;z-index:1;transition:all .3s;}
+.step-dot{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;z-index:1;}
 .step-dot.active{background:var(--green);color:white;}
 .step-dot.done{background:var(--green-light);color:var(--green);}
 .step-dot.inactive{background:#F0F0EE;color:#CCCCCC;}
@@ -90,81 +90,79 @@ input[type=range]{flex:1;accent-color:var(--green);}
     </div>
     <div class="header-sub">上传客户家的照片，AI一键替换产品</div>
   </div>
-  <div id="mainContent">
-    <div class="steps" id="stepsBar">
-      <div class="step"><div class="step-dot active" id="dot1">1</div><div class="step-label active" id="lbl1">上传照片</div></div>
-      <div class="step"><div class="step-dot inactive" id="dot2">2</div><div class="step-label" id="lbl2">涂抹区域</div></div>
-      <div class="step"><div class="step-dot inactive" id="dot3">3</div><div class="step-label" id="lbl3">选产品</div></div>
-      <div class="step"><div class="step-dot inactive" id="dot4">4</div><div class="step-label" id="lbl4">生成</div></div>
+  <div class="steps" id="stepsBar">
+    <div class="step"><div class="step-dot active" id="dot1">1</div><div class="step-label active" id="lbl1">上传照片</div></div>
+    <div class="step"><div class="step-dot inactive" id="dot2">2</div><div class="step-label" id="lbl2">涂抹区域</div></div>
+    <div class="step"><div class="step-dot inactive" id="dot3">3</div><div class="step-label" id="lbl3">选产品</div></div>
+    <div class="step"><div class="step-dot inactive" id="dot4">4</div><div class="step-label" id="lbl4">生成</div></div>
+  </div>
+  <div class="content">
+    <div id="step1">
+      <div class="card">
+        <div class="card-title"><span>📸</span>上传客户家的照片</div>
+        <div class="upload-zone" onclick="document.getElementById('photoInput').click()">
+          <div class="upload-icon">🏠</div>
+          <div class="upload-text">点击上传照片</div>
+          <div class="upload-sub">支持拍照或从相册选择</div>
+        </div>
+        <input type="file" id="photoInput" accept="image/*">
+      </div>
+      <div class="card" style="background:#FFF8E7;border-color:#FAC775;">
+        <div style="font-size:12px;color:#633806;line-height:1.8;">💡 拍照建议：光线充足、正面拍摄、保持稳定</div>
+      </div>
     </div>
-    <div class="content">
-      <div id="step1">
-        <div class="card">
-          <div class="card-title"><span>📸</span>上传客户家的照片</div>
-          <div class="upload-zone" onclick="document.getElementById('photoInput').click()">
-            <div class="upload-icon">🏠</div>
-            <div class="upload-text">点击上传照片</div>
-            <div class="upload-sub">支持拍照或从相册选择</div>
-          </div>
-          <input type="file" id="photoInput" accept="image/*">
+    <div id="step2" style="display:none;">
+      <div class="card">
+        <div class="card-title"><span>✏️</span>涂抹要替换的区域</div>
+        <div class="canvas-wrap">
+          <canvas id="drawCanvas"></canvas>
+          <div class="canvas-hint">用手指涂抹要替换的区域</div>
         </div>
-        <div class="card" style="background:#FFF8E7;border-color:#FAC775;">
-          <div style="font-size:12px;color:#633806;line-height:1.8;">💡 拍照建议：光线充足、正面拍摄、保持稳定</div>
+        <div class="brush-controls">
+          <span class="brush-label">笔刷大小</span>
+          <input type="range" id="brushSize" min="10" max="80" value="30">
+          <div class="brush-preview"></div>
+          <button class="clear-btn" onclick="clearMask()">重新涂</button>
         </div>
       </div>
-      <div id="step2" style="display:none;">
-        <div class="card">
-          <div class="card-title"><span>✏️</span>涂抹要替换的区域</div>
-          <div class="canvas-wrap">
-            <canvas id="drawCanvas"></canvas>
-            <div class="canvas-hint">用手指涂抹要替换的区域</div>
-          </div>
-          <div class="brush-controls">
-            <span class="brush-label">笔刷大小</span>
-            <input type="range" id="brushSize" min="10" max="80" value="30">
-            <div class="brush-preview" id="brushPreview"></div>
-            <button class="clear-btn" onclick="clearMask()">重新涂</button>
-          </div>
+      <div class="card">
+        <div class="card-title"><span>🔄</span>替换类型</div>
+        <div class="type-tabs">
+          <div class="type-tab active" onclick="selectType(this,'furniture')">🛋️ 家具</div>
+          <div class="type-tab" onclick="selectType(this,'wallpaper')">🎨 壁纸</div>
+          <div class="type-tab" onclick="selectType(this,'floor')">🪵 地板</div>
         </div>
-        <div class="card">
-          <div class="card-title"><span>🔄</span>替换类型</div>
-          <div class="type-tabs">
-            <div class="type-tab active" onclick="selectType(this,'furniture')">🛋️ 家具</div>
-            <div class="type-tab" onclick="selectType(this,'wallpaper')">🎨 壁纸</div>
-            <div class="type-tab" onclick="selectType(this,'floor')">🪵 地板</div>
-          </div>
-        </div>
-        <button class="gen-btn" onclick="goToStep3()">下一步：选择产品</button>
       </div>
-      <div id="step3" style="display:none;">
-        <div class="card">
-          <div class="card-title"><span>🛋️</span>选择替换产品</div>
-          <div class="products-grid" id="productsGrid"></div>
-        </div>
-        <button class="gen-btn" onclick="startGenerate()" id="generateBtn" disabled>✨ AI 生成效果图</button>
+      <button class="gen-btn" onclick="goToStep3()">下一步：选择产品</button>
+    </div>
+    <div id="step3" style="display:none;">
+      <div class="card">
+        <div class="card-title"><span>🛋️</span>选择替换产品</div>
+        <div class="products-grid" id="productsGrid"></div>
       </div>
-      <div id="step4" style="display:none;">
-        <div class="card">
-          <div class="card-title"><span>✨</span>生成结果</div>
-          <div class="result-wrap">
-            <img id="resultImg" class="result-img" src="" alt="">
-            <div class="result-badge" id="resultBadge">✓ 替换完成</div>
-          </div>
-          <div class="compare-wrap">
-            <div class="compare-item"><img id="compareOrig" class="compare-img" src="" alt=""><div class="compare-label">改造前</div></div>
-            <div class="compare-item"><img id="compareResult" class="compare-img" src="" alt=""><div class="compare-label">改造后</div></div>
-          </div>
-          <div class="product-info" id="selectedProductInfo" style="display:none;">
-            <div><div class="product-info-name" id="infoName"></div><div class="product-info-sub" id="infoSub"></div></div>
-            <div class="product-info-price" id="infoPrice"></div>
-          </div>
+      <button class="gen-btn" onclick="startGenerate()" id="generateBtn" disabled>✨ AI 生成效果图</button>
+    </div>
+    <div id="step4" style="display:none;">
+      <div class="card">
+        <div class="card-title"><span>✨</span>生成结果</div>
+        <div class="result-wrap">
+          <img id="resultImg" class="result-img" src="" alt="">
+          <div class="result-badge" id="resultBadge">✓ 替换完成</div>
         </div>
-        <div class="action-row">
-          <button class="action-btn primary" onclick="shareResult()">📤 发给客户</button>
-          <button class="action-btn secondary" onclick="retryGenerate()">🔄 换个款式</button>
+        <div class="compare-wrap">
+          <div class="compare-item"><img id="compareOrig" class="compare-img" src="" alt=""><div class="compare-label">改造前</div></div>
+          <div class="compare-item"><img id="compareResult" class="compare-img" src="" alt=""><div class="compare-label">改造后</div></div>
         </div>
-        <button class="action-btn" style="width:100%;margin-top:10px;background:#F0F0EE;color:var(--text);border:none;border-radius:12px;padding:13px;font-size:14px;cursor:pointer;" onclick="newPhoto()">📸 重新上传照片</button>
+        <div class="product-info" id="selectedProductInfo" style="display:none;">
+          <div><div class="product-info-name" id="infoName"></div><div class="product-info-sub" id="infoSub"></div></div>
+          <div class="product-info-price" id="infoPrice"></div>
+        </div>
       </div>
+      <div class="action-row">
+        <button class="action-btn primary" onclick="shareResult()">📤 发给客户</button>
+        <button class="action-btn secondary" onclick="retryGenerate()">🔄 换个款式</button>
+      </div>
+      <button class="action-btn" style="width:100%;margin-top:10px;background:#F0F0EE;color:var(--text);border:none;border-radius:12px;padding:13px;font-size:14px;cursor:pointer;" onclick="newPhoto()">📸 重新上传照片</button>
     </div>
   </div>
   <div class="bottom-nav">
@@ -176,9 +174,8 @@ input[type=range]{flex:1;accent-color:var(--green);}
 </div>
 <div class="toast" id="toast"></div>
 <script>
-var API_KEY = 'sk-bc644f0d5e7b459a9055e16a3a65f26e';
-var STORE_NAME = '门店员工端';
-
+var API_KEY = 'sk-b4adfb94dba24ca69eff13e6d940da13';
+var PROXY = 'https://interioai-proxy-bjijaxjdcd.cn-hangzhou.fcapp.run';
 var PRODUCTS = [
   {id:1,name:'米白布艺沙发',type:'furniture',price:'4980',emoji:'🛋️',desc:'三人位'},
   {id:2,name:'深灰皮革沙发',type:'furniture',price:'6580',emoji:'🪑',desc:'三人位'},
@@ -189,13 +186,9 @@ var PRODUCTS = [
   {id:7,name:'复古实木地板',type:'floor',price:'280/平',emoji:'🪵',desc:'橡木哑光'},
   {id:8,name:'现代灰色地板',type:'floor',price:'220/平',emoji:'⬜',desc:'灰色简约'}
 ];
-
-document.getElementById('storeName').textContent = STORE_NAME;
+document.getElementById('storeName').textContent = '门店员工端';
 document.getElementById('photoInput').addEventListener('change', onPhotoSelected);
-document.getElementById('brushSize').addEventListener('input', function(){
-  brushSize = parseInt(this.value);
-});
-
+document.getElementById('brushSize').addEventListener('input', function(){ brushSize = parseInt(this.value); });
 var originalImageDataURL = null;
 var maskDataURL = null;
 var selectedProduct = null;
@@ -203,209 +196,137 @@ var replaceType = 'furniture';
 var isDrawing = false;
 var lastX = 0, lastY = 0;
 var brushSize = 30;
-
 renderProducts();
-
 function setStep(n){
   for(var i=1;i<=4;i++){
     document.getElementById('step'+i).style.display = i===n?'block':'none';
-    var dot = document.getElementById('dot'+i);
-    var lbl = document.getElementById('lbl'+i);
+    var dot=document.getElementById('dot'+i);
+    var lbl=document.getElementById('lbl'+i);
     if(i<n){dot.className='step-dot done';dot.textContent='✓';lbl.className='step-label';}
     else if(i===n){dot.className='step-dot active';dot.textContent=i;lbl.className='step-label active';}
     else{dot.className='step-dot inactive';dot.textContent=i;lbl.className='step-label';}
   }
 }
-
 function onPhotoSelected(e){
-  var file = e.target.files[0];
-  if(!file) return;
-  var reader = new FileReader();
-  reader.onload = function(ev){
-    originalImageDataURL = ev.target.result;
+  var file=e.target.files[0];
+  if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(ev){
+    originalImageDataURL=ev.target.result;
     initCanvas(ev.target.result);
     setStep(2);
   };
   reader.readAsDataURL(file);
 }
-
 function initCanvas(imgSrc){
-  var canvas = document.getElementById('drawCanvas');
-  var ctx = canvas.getContext('2d');
-  var img = new Image();
-  img.onload = function(){
-    var maxW = Math.min(window.innerWidth - 64, 440);
-    var ratio = img.height / img.width;
-    canvas.width = maxW;
-    canvas.height = maxW * ratio;
-    canvas.style.width = '100%';
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-    canvas._bgImg = img;
+  var canvas=document.getElementById('drawCanvas');
+  var ctx=canvas.getContext('2d');
+  var img=new Image();
+  img.onload=function(){
+    var maxW=Math.min(window.innerWidth-64,440);
+    canvas.width=maxW;
+    canvas.height=maxW*(img.height/img.width);
+    canvas.style.width='100%';
+    ctx.drawImage(img,0,0,canvas.width,canvas.height);
+    canvas._bgImg=img;
   };
-  img.src = imgSrc;
+  img.src=imgSrc;
 }
-
-function getPos(e, canvas){
-  var rect = canvas.getBoundingClientRect();
-  var scaleX = canvas.width / rect.width;
-  var scaleY = canvas.height / rect.height;
-  var src = e.touches ? e.touches[0] : e;
-  return {x:(src.clientX-rect.left)*scaleX, y:(src.clientY-rect.top)*scaleY};
+function getPos(e,canvas){
+  var rect=canvas.getBoundingClientRect();
+  var src=e.touches?e.touches[0]:e;
+  return{x:(src.clientX-rect.left)*(canvas.width/rect.width),y:(src.clientY-rect.top)*(canvas.height/rect.height)};
 }
-
-var canvas = document.getElementById('drawCanvas');
-['mousedown','touchstart'].forEach(function(ev){
-  canvas.addEventListener(ev, function(e){
-    e.preventDefault(); isDrawing=true;
-    var p=getPos(e,canvas); lastX=p.x; lastY=p.y; drawDot(p.x,p.y);
-  }, {passive:false});
-});
-['mousemove','touchmove'].forEach(function(ev){
-  canvas.addEventListener(ev, function(e){
-    e.preventDefault(); if(!isDrawing) return;
-    var p=getPos(e,canvas); drawLine(lastX,lastY,p.x,p.y); lastX=p.x; lastY=p.y;
-  }, {passive:false});
-});
-['mouseup','touchend','mouseleave'].forEach(function(ev){
-  canvas.addEventListener(ev, function(){ isDrawing=false; });
-});
-
-function drawDot(x,y){
-  var ctx=canvas.getContext('2d');
-  ctx.beginPath(); ctx.arc(x,y,brushSize/2,0,Math.PI*2);
-  ctx.fillStyle='rgba(42,122,90,0.45)'; ctx.fill();
-}
-function drawLine(x1,y1,x2,y2){
-  var ctx=canvas.getContext('2d');
-  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
-  ctx.strokeStyle='rgba(42,122,90,0.45)';
-  ctx.lineWidth=brushSize; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.stroke();
-}
-function clearMask(){
-  var ctx=canvas.getContext('2d');
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  if(canvas._bgImg) ctx.drawImage(canvas._bgImg,0,0,canvas.width,canvas.height);
-}
-
+var canvas=document.getElementById('drawCanvas');
+['mousedown','touchstart'].forEach(function(ev){canvas.addEventListener(ev,function(e){e.preventDefault();isDrawing=true;var p=getPos(e,canvas);lastX=p.x;lastY=p.y;drawDot(p.x,p.y);},{passive:false});});
+['mousemove','touchmove'].forEach(function(ev){canvas.addEventListener(ev,function(e){e.preventDefault();if(!isDrawing)return;var p=getPos(e,canvas);drawLine(lastX,lastY,p.x,p.y);lastX=p.x;lastY=p.y;},{passive:false});});
+['mouseup','touchend','mouseleave'].forEach(function(ev){canvas.addEventListener(ev,function(){isDrawing=false;});});
+function drawDot(x,y){var ctx=canvas.getContext('2d');ctx.beginPath();ctx.arc(x,y,brushSize/2,0,Math.PI*2);ctx.fillStyle='rgba(42,122,90,0.5)';ctx.fill();}
+function drawLine(x1,y1,x2,y2){var ctx=canvas.getContext('2d');ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.strokeStyle='rgba(42,122,90,0.5)';ctx.lineWidth=brushSize;ctx.lineCap='round';ctx.stroke();}
+function clearMask(){var ctx=canvas.getContext('2d');ctx.clearRect(0,0,canvas.width,canvas.height);if(canvas._bgImg)ctx.drawImage(canvas._bgImg,0,0,canvas.width,canvas.height);}
 function getMaskDataURL(){
   var off=document.createElement('canvas');
-  off.width=canvas.width; off.height=canvas.height;
+  off.width=canvas.width;off.height=canvas.height;
   var octx=off.getContext('2d');
-  octx.fillStyle='black'; octx.fillRect(0,0,off.width,off.height);
-  var imgData=canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height);
-  var offData=octx.getImageData(0,0,off.width,off.height);
-  if(canvas._bgImg){
-    var bg=document.createElement('canvas');
-    bg.width=canvas.width; bg.height=canvas.height;
-    bg.getContext('2d').drawImage(canvas._bgImg,0,0,canvas.width,canvas.height);
-    var bgData=bg.getContext('2d').getImageData(0,0,canvas.width,canvas.height);
-    for(var i=0;i<imgData.data.length;i+=4){
-      var dg=imgData.data[i+1]-bgData.data[i+1];
-      var diff=Math.abs(imgData.data[i]-bgData.data[i])+Math.abs(dg)+Math.abs(imgData.data[i+2]-bgData.data[i+2]);
-      if(dg>20||diff>30){offData.data[i]=255;offData.data[i+1]=255;offData.data[i+2]=255;offData.data[i+3]=255;}
-    }
-  } else {
-    for(var j=0;j<offData.data.length;j+=4){offData.data[j]=offData.data[j+1]=offData.data[j+2]=255;offData.data[j+3]=255;}
+  octx.fillStyle='black';octx.fillRect(0,0,off.width,off.height);
+  var cur=canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height);
+  var bg=document.createElement('canvas');
+  bg.width=canvas.width;bg.height=canvas.height;
+  bg.getContext('2d').drawImage(canvas._bgImg,0,0,canvas.width,canvas.height);
+  var bgd=bg.getContext('2d').getImageData(0,0,canvas.width,canvas.height);
+  var od=octx.getImageData(0,0,off.width,off.height);
+  for(var i=0;i<cur.data.length;i+=4){
+    var diff=Math.abs(cur.data[i]-bgd.data[i])+Math.abs(cur.data[i+1]-bgd.data[i+1])+Math.abs(cur.data[i+2]-bgd.data[i+2]);
+    if(diff>25){od.data[i]=255;od.data[i+1]=255;od.data[i+2]=255;od.data[i+3]=255;}
   }
-  octx.putImageData(offData,0,0);
+  octx.putImageData(od,0,0);
   return off.toDataURL('image/png');
 }
-
-function selectType(el,type){
-  replaceType=type;
-  document.querySelectorAll('.type-tab').forEach(function(t){t.classList.remove('active');});
-  el.classList.add('active');
-  renderProducts();
-}
-function goToStep3(){
-  maskDataURL=getMaskDataURL(); setStep(3);
-}
+function selectType(el,type){replaceType=type;document.querySelectorAll('.type-tab').forEach(function(t){t.classList.remove('active');});el.classList.add('active');renderProducts();}
+function goToStep3(){maskDataURL=getMaskDataURL();setStep(3);}
 function renderProducts(){
   var grid=document.getElementById('productsGrid');
-  if(!grid) return;
+  if(!grid)return;
   var filtered=PRODUCTS.filter(function(p){return p.type===replaceType;});
-  grid.innerHTML=filtered.map(function(p){
-    return '<div class="product-item" id="prod_'+p.id+'" onclick="selectProduct('+p.id+')"><div class="product-thumb-placeholder">'+p.emoji+'</div><div class="product-name">'+p.name+'</div></div>';
-  }).join('')+'<div class="add-product-btn" onclick="addProduct()"><span>+</span><span class="add-product-text">上传产品</span></div>';
+  grid.innerHTML=filtered.map(function(p){return '<div class="product-item" id="prod_'+p.id+'" onclick="selectProduct('+p.id+')"><div class="product-thumb-placeholder">'+p.emoji+'</div><div class="product-name">'+p.name+'</div></div>';}).join('')+'<div class="add-product-btn" onclick="showToast(\'产品库管理请在商家后台操作\')"><span>+</span><span class="add-product-text">上传产品</span></div>';
 }
 function selectProduct(id){
   selectedProduct=PRODUCTS.find(function(p){return p.id===id;});
   document.querySelectorAll('.product-item').forEach(function(el){el.classList.remove('selected');});
   var el=document.getElementById('prod_'+id);
-  if(el) el.classList.add('selected');
+  if(el)el.classList.add('selected');
   document.getElementById('generateBtn').disabled=false;
 }
-function addProduct(){ showToast('产品库管理请在商家后台操作'); }
-
 async function startGenerate(){
   if(!selectedProduct){showToast('请先选择产品');return;}
   var btn=document.getElementById('generateBtn');
   btn.disabled=true;
-  btn.innerHTML='<div class="loading-dots"><span></span><span></span><span></span></div> AI生成中，请稍候...';
-  try {
-    var prompts={
-      furniture:'Replace the selected furniture area with '+selectedProduct.name+', photorealistic interior design, natural lighting, high quality, seamless',
-      wallpaper:'Replace the selected wall area with '+selectedProduct.name+' wallpaper, photorealistic interior, natural lighting, seamless wall texture',
-      floor:'Replace the selected floor area with '+selectedProduct.name+' flooring, photorealistic interior, natural lighting, seamless flooring'
-    };
-    var prompt=prompts[replaceType];
-    var bodyData={
+  btn.innerHTML='<div class="loading-dots"><span></span><span></span><span></span></div> AI生成中，约60秒请耐心等待...';
+  try{
+    var typeMap={furniture:'将涂抹区域的家具替换为'+selectedProduct.name+'，保持房间其他部分不变，真实感强，光影自然',wallpaper:'将涂抹区域的墙面替换为'+selectedProduct.name+'壁纸，保持房间其他部分不变，真实感强',floor:'将涂抹区域的地板替换为'+selectedProduct.name+'，保持房间其他部分不变，真实感强，光影自然'};
+    var prompt=typeMap[replaceType];
+    var imgB64=originalImageDataURL.split(',')[1];
+    var maskB64=getMaskDataURL().split(',')[1];
+    var body={
       model:'wanx-x-painting',
-      input:{
-        prompt:prompt,
-        negative_prompt:'blurry, low quality, distorted, unrealistic',
-        base_image_url:originalImageDataURL,
-        mask_image_url:maskDataURL
-      },
-      parameters:{size:'1024*1024'}
+      input:{prompt:prompt,base_image:'data:image/png;base64,'+imgB64,mask_image:'data:image/png;base64,'+maskB64},
+      parameters:{n:1}
     };
-    var resp=await fetch('https://interioai-proxy-bjijaxjdcd.cn-hangzhou.fcapp.run/api/v1/services/aigc/image2image/image-synthesis',{
+    var resp=await fetch(PROXY+'/api/v1/services/aigc/image2image/image-synthesis',{
       method:'POST',
-      headers:{
-        'Authorization':'Bearer '+API_KEY,
-        'Content-Type':'application/json',
-        'X-DashScope-Async':'enable'
-      },
-      body:JSON.stringify(bodyData)
+      headers:{'Authorization':'Bearer '+API_KEY,'Content-Type':'application/json','X-DashScope-Async':'enable'},
+      body:JSON.stringify(body)
     });
-    if(!resp.ok){
-      var errText=await resp.text();
-      throw new Error('API Error '+resp.status+': '+errText);
-    }
-    var data=await resp.json();
-    if(data.output && data.output.task_id){
+    var txt=await resp.text();
+    var data=JSON.parse(txt);
+    if(data.output&&data.output.task_id){
       await pollResult(data.output.task_id);
-    } else if(data.output && data.output.results && data.output.results[0]){
-      showResult(data.output.results[0].url);
-    } else {
-      throw new Error(data.message||'Unknown error');
+    }else{
+      throw new Error(data.message||txt);
     }
-  } catch(err){
-    console.error(err);
+  }catch(err){
     btn.disabled=false;
     btn.innerHTML='✨ AI 生成效果图';
-    showToast('生成失败：'+err.message);
+    showToast('失败：'+err.message);
+    console.error(err);
   }
 }
-
 async function pollResult(taskId){
-  for(var i=0;i<30;i++){
-    await new Promise(function(r){setTimeout(r,3000);});
-    var res=await fetch('https://interioai-proxy-bjijaxjdcd.cn-hangzhou.fcapp.run/api/v1/tasks/'+taskId,{
-      headers:{'Authorization':'Bearer '+API_KEY}
-    });
+  for(var i=0;i<40;i++){
+    await new Promise(function(r){setTimeout(r,4000);});
+    var res=await fetch(PROXY+'/api/v1/tasks/'+taskId,{headers:{'Authorization':'Bearer '+API_KEY}});
     var data=await res.json();
     var status=data.output&&data.output.task_status;
     if(status==='SUCCEEDED'){
       var url=data.output.results&&data.output.results[0]&&data.output.results[0].url;
       if(url){showResult(url);return;}
-    } else if(status==='FAILED'){
-      throw new Error('AI生成失败，请重试');
+    }else if(status==='FAILED'){
+      var errMsg=data.output&&data.output.message||'生成失败';
+      throw new Error(errMsg);
     }
   }
   throw new Error('等待超时，请重试');
 }
-
 function showResult(url){
   document.getElementById('resultImg').src=url;
   document.getElementById('compareOrig').src=originalImageDataURL;
@@ -419,33 +340,11 @@ function showResult(url){
   }
   setStep(4);
 }
-
-function retryGenerate(){
-  setStep(3); selectedProduct=null;
-  document.querySelectorAll('.product-item').forEach(function(el){el.classList.remove('selected');});
-  var btn=document.getElementById('generateBtn');
-  btn.disabled=true; btn.innerHTML='✨ AI 生成效果图';
-}
-function newPhoto(){
-  originalImageDataURL=null; maskDataURL=null; selectedProduct=null;
-  document.getElementById('photoInput').value=''; setStep(1);
-}
-function shareResult(){
-  var url=document.getElementById('resultImg').src;
-  if(navigator.share){
-    navigator.share({title:'效果图',url:url}).catch(function(){copyLink(url);});
-  } else { copyLink(url); }
-}
-function copyLink(text){
-  if(navigator.clipboard){
-    navigator.clipboard.writeText(text).then(function(){showToast('链接已复制，可发给客户');});
-  } else { showToast('请长按图片保存后发给客户'); }
-}
-function showToast(msg){
-  var t=document.getElementById('toast');
-  t.textContent=msg; t.classList.add('show');
-  setTimeout(function(){t.classList.remove('show');},2500);
-}
+function retryGenerate(){setStep(3);selectedProduct=null;document.querySelectorAll('.product-item').forEach(function(el){el.classList.remove('selected');});var btn=document.getElementById('generateBtn');btn.disabled=true;btn.innerHTML='✨ AI 生成效果图';}
+function newPhoto(){originalImageDataURL=null;maskDataURL=null;selectedProduct=null;document.getElementById('photoInput').value='';setStep(1);}
+function shareResult(){var url=document.getElementById('resultImg').src;if(navigator.share){navigator.share({title:'效果图',url:url}).catch(function(){copyLink(url);});}else{copyLink(url);}}
+function copyLink(text){if(navigator.clipboard){navigator.clipboard.writeText(text).then(function(){showToast('链接已复制，可发给客户');});}else{showToast('请长按图片保存后发给客户');}}
+function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2500);}
 </script>
 </body>
 </html>
