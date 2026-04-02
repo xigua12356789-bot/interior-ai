@@ -176,7 +176,7 @@ input[type=range]{flex:1;accent-color:var(--green);}
 </div>
 <div class="toast" id="toast"></div>
 <script>
-var API_KEY = 'sk-b4adfb94dba24ca69eff13e6d940da13';
+var API_KEY = 'sk-bc644f0d5e7b459a9055e16a3a65f26e';
 var STORE_NAME = '门店员工端';
 
 var PRODUCTS = [
@@ -349,17 +349,15 @@ async function startGenerate(){
       floor:'Replace the selected floor area with '+selectedProduct.name+' flooring, photorealistic interior, natural lighting, seamless flooring'
     };
     var prompt=prompts[replaceType];
-    var imageBase64=originalImageDataURL.split(',')[1];
-    var maskBase64=maskDataURL.split(',')[1];
     var bodyData={
       model:'wanx-x-painting',
       input:{
         prompt:prompt,
         negative_prompt:'blurry, low quality, distorted, unrealistic',
-        image:imageBase64,
-        mask_image:maskBase64
+        base_image_url:originalImageDataURL,
+        mask_image_url:maskDataURL
       },
-      parameters:{size:'1024*1024',}
+      parameters:{size:'1024*1024'}
     };
     var resp=await fetch('https://interioai-proxy-bjijaxjdcd.cn-hangzhou.fcapp.run/api/v1/services/aigc/image2image/image-synthesis',{
       method:'POST',
