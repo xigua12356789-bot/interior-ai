@@ -361,7 +361,7 @@ async function startGenerate(){
       },
       parameters:{size:'1024*1024',n:1,steps:30,strength:0.7}
     };
-    var resp=await fetch('https://dashscope.aliyuncs.com/api/v1/services/aigc/image2image/image-synthesis',{
+    var resp=await fetch('https://interioai-proxy-bjijaxjdcd.cn-hangzhou.fcapp.run/api/v1/services/aigc/image2image/image-synthesis',{
       method:'POST',
       headers:{
         'Authorization':'Bearer '+API_KEY,
@@ -393,7 +393,7 @@ async function startGenerate(){
 async function pollResult(taskId){
   for(var i=0;i<30;i++){
     await new Promise(function(r){setTimeout(r,3000);});
-    var res=await fetch('https://dashscope.aliyuncs.com/api/v1/tasks/'+taskId,{
+    var res=await fetch('https://interioai-proxy-bjijaxjdcd.cn-hangzhou.fcapp.run/api/v1/tasks/'+taskId,{
       headers:{'Authorization':'Bearer '+API_KEY}
     });
     var data=await res.json();
