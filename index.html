@@ -252,6 +252,19 @@ function pick(id){
   document.getElementById('generateBtn').disabled=false;
 }
 
+function resizeImage(dataURL,minSize){
+  return new Promise(function(resolve){
+    var img=new Image();
+    img.onload=function(){
+      var w=img.width,h=img.height;
+      if(w<minSize){var s=minSize/w;w=minSize;h=Math.round(h*s);}
+      var c=document.createElement("canvas");c.width=w;c.height=h;
+      c.getContext("2d").drawImage(img,0,0,w,h);
+      resolve(c.toDataURL("image/jpeg",0.9));
+    };
+    img.src=dataURL;
+  });
+}
 async function startGenerate(){
   if(!selectedProduct){showToast('请先选择产品');return;}
   var btn=document.getElementById('generateBtn');
@@ -263,8 +276,8 @@ async function startGenerate(){
       wallpaper:'将涂抹的白色区域内的墙面换成'+selectedProduct.name+'壁纸，保持室内其他区域不变',
       floor:'将涂抹的白色区域内的地面换成'+selectedProduct.name+'，保持室内其他区域不变'
     };
-    var imgB64=originalImageDataURL;
-    var maskB64=getMask();
+    var imgB64=await resizeImage(originalImageDataURL,1024);
+    var maskB64=await resizeImage(getMask(),1024);
     var body=JSON.stringify({
       model:'wanx2.1-imageedit',
       input:{
