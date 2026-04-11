@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>空间AI · 效果图生成</title>
+<style>
+:root{--green:#2A7A5A;--green-light:#E1F5EE;--bg:#F5F3F0;--surface:#fff;--border:#E8E4DE;--text:#1A1A18;--muted:#8A8A86;--radius:16px;}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;background:var(--bg);font-family:'PingFang SC','Microsoft YaHei',sans-serif;color:var(--text);}
+.app{display:flex;flex-direction:column;min-height:100vh;max-width:480px;margin:0 auto;background:var(--bg);}
+.header{background:var(--green);padding:16px 20px 20px;color:white;}
+.header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
+.header-logo{font-size:18px;font-weight:700;}
+.header-logo span{opacity:0.7;font-weight:400;}
+.header-store{font-size:12px;opacity:0.7;display:flex;align-items:center;gap:8px;}
+.header-sub{font-size:13px;opacity:0.85;}
+.steps{background:var(--surface);padding:14px 20px;display:flex;border-bottom:1px solid var(--border);}
+.step{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;position:relative;}
+.step::after{content:'';position:absolute;top:12px;left:60%;width:80%;height:1.5px;background:var(--border);z-index:0;}
+.step:last-child::after{display:none;}
+.step-dot{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;z-index:1;}
+.step-dot.active{background:var(--green);color:white;}
+.step-dot.done{background:var(--green-light);color:var(--green);}
+.step-dot.inactive{background:#F0F0EE;color:#CCC;}
+.step-label{font-size:10px;color:var(--muted);}
+.step-label.active{color:var(--green);font-weight:500;}
+.content{flex:1;padding:16px;}
+.card{background:var(--surface);border-radius:var(--radius);padding:16px;margin-bottom:12px;border:1px solid var(--border);}
+.card-title{font-size:13px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:6px;}
+.upload-zone{border:2px dashed var(--border);border-radius:12px;padding:32px 20px;text-align:center;cursor:pointer;background:#FAFAF8;}
+.upload-icon{font-size:36px;margin-bottom:8px;}
+.upload-text{font-size:14px;font-weight:500;margin-bottom:4px;}
+.upload-sub{font-size:12px;color:var(--muted);}
+#photoInput{display:none;}
+.canvas-wrap{position:relative;border-radius:12px;overflow:hidden;background:#F0EDE8;}
+#drawCanvas{display:block;width:100%;cursor:crosshair;touch-action:none;}
+.canvas-hint{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.6);color:white;font-size:11px;padding:4px 10px;border-radius:20px;white-space:nowrap;pointer-events:none;}
+.brush-controls{display:flex;align-items:center;gap:12px;margin-top:10px;}
+.brush-label{font-size:12px;color:var(--muted);white-space:nowrap;}
+input[type=range]{flex:1;accent-color:var(--green);}
+.clear-btn{font-size:12px;color:var(--green);background:var(--green-light);border:none;padding:6px 12px;border-radius:8px;cursor:pointer;}
+.type-tabs{display:flex;gap:8px;}
+.type-tab{flex:1;padding:10px 8px;text-align:center;border-radius:10px;font-size:13px;font-weight:500;cursor:pointer;border:1.5px solid var(--border);background:#FAFAF8;color:var(--muted);}
+.type-tab.active{background:var(--green-light);border-color:var(--green);color:var(--green);}
+.products-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.product-item{border-radius:10px;overflow:hidden;border:2px solid transparent;cursor:pointer;background:#F5F3F0;}
+.product-item.selected{border-color:var(--green);}
+.product-thumb{width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:28px;background:#F0EDE8;}
+.product-name{font-size:10px;text-align:center;padding:5px 4px;background:white;line-height:1.3;}
+.add-product-btn{border:2px dashed var(--border);border-radius:10px;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;background:#FAFAF8;font-size:22px;color:var(--muted);gap:4px;}
+.add-product-text{font-size:10px;color:var(--muted);}
+.gen-btn{width:100%;padding:16px;background:var(--green);color:white;border:none;border-radius:14px;font-size:16px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px;}
+.gen-btn:disabled{background:#C8C4BE;cursor:not-allowed;}
+.loading-dots{display:flex;gap:4px;}
+.loading-dots span{width:6px;height:6px;border-radius:50%;background:white;animation:dot 1.2s infinite;}
+.loading-dots span:nth-child(2){animation-delay:.2s;}
+.loading-dots span:nth-child(3){animation-delay:.4s;}
+@keyframes dot{0%,80%,100%{opacity:.3;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}
+.result-wrap{border-radius:12px;overflow:hidden;position:relative;}
+.result-img{width:100%;display:block;}
+.result-badge{position:absolute;top:10px;left:10px;background:rgba(42,122,90,0.9);color:white;font-size:11px;padding:4px 10px;border-radius:20px;}
+.compare-wrap{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;}
+.compare-item{border-radius:10px;overflow:hidden;}
+.compare-img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;}
+.compare-label{text-align:center;font-size:11px;color:var(--muted);padding:5px;background:white;}
+.action-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;}
+.action-btn{padding:13px;border-radius:12px;font-size:14px;font-weight:500;text-align:center;cursor:pointer;border:none;}
+.action-btn.primary{background:var(--green);color:white;}
+.action-btn.secondary{background:#F0F0EE;color:var(--text);}
+.product-info-row{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:#F5F3F0;border-radius:10px;margin-top:10px;}
+.bottom-nav{background:var(--surface);border-top:1px solid var(--border);display:flex;padding:10px 0 20px;}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;}
+.nav-icon{font-size:22px;}
+.nav-label{font-size:10px;color:var(--muted);}
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.75);color:white;font-size:13px;padding:10px 20px;border-radius:20px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;}
+.toast.show{opacity:1;}
+
+/* Settings overlay */
+.settings-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;display:flex;align-items:flex-end;justify-content:center;}
+.settings-sheet{background:var(--surface);width:100%;max-width:480px;border-radius:20px 20px 0 0;padding:24px 24px 40px;}
+.settings-title{font-size:16px;font-weight:600;margin-bottom:6px;}
+.settings-desc{font-size:12px;color:var(--muted);margin-bottom:20px;line-height:1.7;}
+.settings-label{font-size:12px;color:var(--muted);margin-bottom:6px;display:block;}
+.settings-input{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:12px 14px;font-size:14px;outline:none;font-family:monospace;}
+.settings-input:focus{border-color:var(--green);}
+.settings-save{width:100%;margin-top:14px;padding:14px;background:var(--green);color:white;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;}
+.settings-cancel{width:100%;margin-top:8px;padding:12px;background:none;color:var(--muted);border:none;font-size:14px;cursor:pointer;}
+.key-status{font-size:11px;padding:3px 8px;border-radius:6px;cursor:pointer;}
+.key-set{background:var(--green-light);color:var(--green);}
+.key-unset{background:#FFF0E0;color:#C07020;}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="header-top">
+      <div class="header-logo">空间<span>AI</span></div>
+      <div class="header-store">
+        <span>门店员工端</span>
+        <span class="key-status" id="keyStatus" onclick="openSettings()"></span>
+      </div>
+    </div>
+    <div class="header-sub">上传客户家的照片，AI一键替换产品</div>
+  </div>
+  <div class="steps">
+    <div class="step"><div class="step-dot active" id="dot1">1</div><div class="step-label active" id="lbl1">上传照片</div></div>
+    <div class="step"><div class="step-dot inactive" id="dot2">2</div><div class="step-label" id="lbl2">涂抹区域</div></div>
+    <div class="step"><div class="step-dot inactive" id="dot3">3</div><div class="step-label" id="lbl3">选产品</div></div>
+    <div class="step"><div class="step-dot inactive" id="dot4">4</div><div class="step-label" id="lbl4">生成</div></div>
+  </div>
+  <div class="content">
+    <div id="step1">
+      <div class="card">
+        <div class="card-title">📸 上传客户家的照片</div>
+        <div class="upload-zone" onclick="document.getElementById('photoInput').click()">
+          <div class="upload-icon">🏠</div>
+          <div class="upload-text">点击上传照片</div>
+          <div class="upload-sub">支持拍照或从相册选择</div>
+        </div>
+        <input type="file" id="photoInput" accept="image/*">
+      </div>
+      <div class="card" style="background:#FFF8E7;border-color:#FAC775;">
+        <div style="font-size:12px;color:#633806;line-height:1.8;">💡 拍照建议：光线充足、正面拍摄、保持稳定</div>
+      </div>
+    </div>
+    <div id="step2" style="display:none;">
+      <div class="card">
+        <div class="card-title">✏️ 涂抹要替换的区域</div>
+        <div class="canvas-wrap">
+          <canvas id="drawCanvas"></canvas>
+          <div class="canvas-hint">用手指涂抹要替换的区域</div>
+        </div>
+        <div class="brush-controls">
+          <span class="brush-label">笔刷大小</span>
+          <input type="range" id="brushSize" min="10" max="80" value="30">
+          <button class="clear-btn" onclick="clearMask()">重新涂</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">🔄 替换类型</div>
+        <div class="type-tabs">
+          <div class="type-tab active" onclick="selectType(this,'furniture')">🛋️ 家具</div>
+          <div class="type-tab" onclick="selectType(this,'wallpaper')">🎨 壁纸</div>
+          <div class="type-tab" onclick="selectType(this,'floor')">🪵 地板</div>
+        </div>
+      </div>
+      <button class="gen-btn" onclick="goToStep3()">下一步：选择产品</button>
+    </div>
+    <div id="step3" style="display:none;">
+      <div class="card">
+        <div class="card-title">🛋️ 选择替换产品</div>
+        <div class="products-grid" id="productsGrid"></div>
+      </div>
+      <button class="gen-btn" onclick="startGenerate()" id="generateBtn" disabled>✨ AI 生成效果图</button>
+    </div>
+    <div id="step4" style="display:none;">
+      <div class="card">
+        <div class="card-title">✨ 生成结果</div>
+        <div class="result-wrap">
+          <img id="resultImg" class="result-img" src="" alt="">
+          <div class="result-badge" id="resultBadge">✓ 替换完成</div>
+        </div>
+        <div class="compare-wrap">
+          <div class="compare-item"><img id="compareOrig" class="compare-img" src="" alt=""><div class="compare-label">改造前</div></div>
+          <div class="compare-item"><img id="compareResult" class="compare-img" src="" alt=""><div class="compare-label">改造后</div></div>
+        </div>
+        <div class="product-info-row" id="productInfoRow" style="display:none;">
+          <div><div style="font-size:13px;font-weight:500;" id="infoName"></div><div style="font-size:11px;color:var(--muted);margin-top:2px;" id="infoSub"></div></div>
+          <div style="font-size:16px;font-weight:700;color:var(--green);" id="infoPrice"></div>
+        </div>
+      </div>
+      <div class="action-row">
+        <button class="action-btn primary" onclick="shareResult()">📤 发给客户</button>
+        <button class="action-btn secondary" onclick="retryGenerate()">🔄 换个款式</button>
+      </div>
+      <button class="action-btn" style="width:100%;margin-top:10px;background:#F0F0EE;color:var(--text);border:none;border-radius:12px;padding:13px;font-size:14px;cursor:pointer;" onclick="newPhoto()">📸 重新上传照片</button>
+    </div>
+  </div>
+  <div class="bottom-nav">
+    <div class="nav-item"><div class="nav-icon">✨</div><div class="nav-label" style="color:var(--green);">生成</div></div>
+    <div class="nav-item"><div class="nav-icon">📋</div><div class="nav-label">记录</div></div>
+    <div class="nav-item"><div class="nav-icon">🛋️</div><div class="nav-label">产品库</div></div>
+    <div class="nav-item" onclick="openSettings()"><div class="nav-icon">⚙️</div><div class="nav-label">设置</div></div>
+  </div>
+</div>
+
+<!-- Settings Sheet -->
+<div class="settings-overlay" id="settingsOverlay" style="display:none;" onclick="onOverlayClick(event)">
+  <div class="settings-sheet" id="settingsSheet">
+    <div class="settings-title">⚙️ API 配置</div>
+    <div class="settings-desc">
+      请输入您的阿里云 DashScope API Key。<br>
+      Key 仅保存在您的浏览器本地，不会上传至任何服务器。<br>
+      前往 <strong>dashscope.aliyun.com</strong> 获取 Key。
+    </div>
+    <label class="settings-label">API Key</label>
+    <input class="settings-input" id="apiKeyInput" type="password" placeholder="sk-xxxxxxxxxxxxxxxx" autocomplete="off">
+    <button class="settings-save" onclick="saveApiKey()">保存</button>
+    <button class="settings-cancel" onclick="closeSettings()">取消</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script>
+var PROXY = 'https://interioai-proxy-bjijaxjdcd.cn-hangzhou.fcapp.run';
+var PRODUCTS = [
+  {id:1,name:'米白布艺沙发',type:'furniture',price:'4980',emoji:'🛋️',desc:'三人位'},
+  {id:2,name:'深灰皮革沙发',type:'furniture',price:'6580',emoji:'🪑',desc:'三人位'},
+  {id:3,name:'原木北欧沙发',type:'furniture',price:'3980',emoji:'🛋️',desc:'双人位'},
+  {id:4,name:'莫兰迪灰壁纸',type:'wallpaper',price:'180/卷',emoji:'🎨',desc:'素色哑光'},
+  {id:5,name:'大理石纹壁纸',type:'wallpaper',price:'260/卷',emoji:'🖼️',desc:'石纹高档'},
+  {id:6,name:'北欧几何壁纸',type:'wallpaper',price:'150/卷',emoji:'🎭',desc:'几何简约'},
+  {id:7,name:'复古实木地板',type:'floor',price:'280/平',emoji:'🪵',desc:'橡木哑光'},
+  {id:8,name:'现代灰色地板',type:'floor',price:'220/平',emoji:'⬜',desc:'灰色简约'}
+];
+var originalImageDataURL=null,maskDataURL=null,selectedProduct=null,replaceType='furniture';
+var isDrawing=false,lastX=0,lastY=0,brushSize=30;
+
+// API Key management
+function getApiKey(){ return localStorage.getItem('space_ai_key')||''; }
+function saveApiKey(){
+  var v=document.getElementById('apiKeyInput').value.trim();
+  if(!v){showToast('请输入 API Key');return;}
+  if(!v.startsWith('sk-')){showToast('Key 格式不正确，应以 sk- 开头');return;}
+  localStorage.setItem('space_ai_key',v);
+  updateKeyStatus();
+  closeSettings();
+  showToast('✅ API Key 已保存');
+}
+function updateKeyStatus(){
+  var el=document.getElementById('keyStatus');
+  if(getApiKey()){el.textContent='Key 已配置';el.className='key-status key-set';}
+  else{el.textContent='未配置 Key';el.className='key-status key-unset';}
+}
+function openSettings(){
+  document.getElementById('apiKeyInput').value=getApiKey();
+  document.getElementById('settingsOverlay').style.display='flex';
+}
+function closeSettings(){ document.getElementById('settingsOverlay').style.display='none'; }
+function onOverlayClick(e){ if(e.target===document.getElementById('settingsOverlay'))closeSettings(); }
+
+document.getElementById('photoInput').addEventListener('change',onPhotoSelected);
+document.getElementById('brushSize').addEventListener('input',function(){brushSize=parseInt(this.value);});
+renderProducts();
+updateKeyStatus();
+
+// Auto-prompt if no key set
+if(!getApiKey()){
+  setTimeout(function(){
+    showToast('请先配置 API Key');
+    setTimeout(openSettings,1500);
+  },800);
+}
+
+function setStep(n){
+  for(var i=1;i<=4;i++){
+    document.getElementById('step'+i).style.display=i===n?'block':'none';
+    var dot=document.getElementById('dot'+i),lbl=document.getElementById('lbl'+i);
+    if(i<n){dot.className='step-dot done';dot.textContent='✓';lbl.className='step-label';}
+    else if(i===n){dot.className='step-dot active';dot.textContent=i;lbl.className='step-label active';}
+    else{dot.className='step-dot inactive';dot.textContent=i;lbl.className='step-label';}
+  }
+}
+function onPhotoSelected(e){
+  var file=e.target.files[0];if(!file)return;
+  if(!getApiKey()){showToast('请先配置 API Key');openSettings();return;}
+  var reader=new FileReader();
+  reader.onload=function(ev){originalImageDataURL=ev.target.result;initCanvas(ev.target.result);setStep(2);};
+  reader.readAsDataURL(file);
+}
+function initCanvas(src){
+  var c=document.getElementById('drawCanvas'),ctx=c.getContext('2d'),img=new Image();
+  img.onload=function(){
+    var w=Math.min(window.innerWidth-64,440);
+    c.width=w;c.height=w*(img.height/img.width);c.style.width='100%';
+    ctx.drawImage(img,0,0,c.width,c.height);c._bg=img;
+  };img.src=src;
+}
+function getPos(e,c){
+  var r=c.getBoundingClientRect(),s=e.touches?e.touches[0]:e;
+  return{x:(s.clientX-r.left)*(c.width/r.width),y:(s.clientY-r.top)*(c.height/r.height)};
+}
+var C=document.getElementById('drawCanvas');
+['mousedown','touchstart'].forEach(function(ev){C.addEventListener(ev,function(e){e.preventDefault();isDrawing=true;var p=getPos(e,C);lastX=p.x;lastY=p.y;dot(p.x,p.y);},{passive:false});});
+['mousemove','touchmove'].forEach(function(ev){C.addEventListener(ev,function(e){e.preventDefault();if(!isDrawing)return;var p=getPos(e,C);line(lastX,lastY,p.x,p.y);lastX=p.x;lastY=p.y;},{passive:false});});
+['mouseup','touchend','mouseleave'].forEach(function(ev){C.addEventListener(ev,function(){isDrawing=false;});});
+function dot(x,y){var ctx=C.getContext('2d');ctx.beginPath();ctx.arc(x,y,brushSize/2,0,Math.PI*2);ctx.fillStyle='rgba(42,122,90,0.5)';ctx.fill();}
+function line(x1,y1,x2,y2){var ctx=C.getContext('2d');ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.strokeStyle='rgba(42,122,90,0.5)';ctx.lineWidth=brushSize;ctx.lineCap='round';ctx.stroke();}
+function clearMask(){var ctx=C.getContext('2d');ctx.clearRect(0,0,C.width,C.height);if(C._bg)ctx.drawImage(C._bg,0,0,C.width,C.height);}
+
+function getMask(){
+  var off=document.createElement('canvas');off.width=C.width;off.height=C.height;
+  var oc=off.getContext('2d');oc.fillStyle='black';oc.fillRect(0,0,off.width,off.height);
+  var cur=C.getContext('2d').getImageData(0,0,C.width,C.height);
+  var bg=document.createElement('canvas');bg.width=C.width;bg.height=C.height;
+  bg.getContext('2d').drawImage(C._bg,0,0,C.width,C.height);
+  var bgd=bg.getContext('2d').getImageData(0,0,C.width,C.height);
+  var od=oc.getImageData(0,0,off.width,off.height);
+  for(var i=0;i<cur.data.length;i+=4){
+    if(Math.abs(cur.data[i]-bgd.data[i])+Math.abs(cur.data[i+1]-bgd.data[i+1])+Math.abs(cur.data[i+2]-bgd.data[i+2])>25){
+      od.data[i]=od.data[i+1]=od.data[i+2]=255;od.data[i+3]=255;
+    }
+  }
+  oc.putImageData(od,0,0);return off.toDataURL('image/png');
+}
+
+function selectType(el,t){replaceType=t;document.querySelectorAll('.type-tab').forEach(function(x){x.classList.remove('active');});el.classList.add('active');renderProducts();}
+function goToStep3(){maskDataURL=getMask();setStep(3);}
+function renderProducts(){
+  var g=document.getElementById('productsGrid');if(!g)return;
+  var f=PRODUCTS.filter(function(p){return p.type===replaceType;});
+  g.innerHTML=f.map(function(p){return '<div class="product-item" id="p'+p.id+'" onclick="pick('+p.id+')"><div class="product-thumb">'+p.emoji+'</div><div class="product-name">'+p.name+'</div></div>';}).join('')+'<div class="add-product-btn"><span>+</span><span class="add-product-text">上传产品</span></div>';
+}
+function pick(id){
+  selectedProduct=PRODUCTS.find(function(p){return p.id===id;});
+  document.querySelectorAll('.product-item').forEach(function(el){el.classList.remove('selected');});
+  var el=document.getElementById('p'+id);if(el)el.classList.add('selected');
+  document.getElementById('generateBtn').disabled=false;
+}
+
+function resizeImage(dataURL,minSize){
+  return new Promise(function(resolve){
+    var img=new Image();
+    img.onload=function(){
+      var w=img.width,h=img.height;
+      if(w<minSize){var s=minSize/w;w=minSize;h=Math.round(h*s);}
+      var c=document.createElement("canvas");c.width=w;c.height=h;
+      c.getContext("2d").drawImage(img,0,0,w,h);
+      resolve(c.toDataURL("image/jpeg",0.9));
+    };
+    img.src=dataURL;
+  });
+}
+async function startGenerate(){
+  var apiKey=getApiKey();
+  if(!apiKey){showToast('请先配置 API Key');openSettings();return;}
+  if(!selectedProduct){showToast('请先选择产品');return;}
+  var btn=document.getElementById('generateBtn');
+  btn.disabled=true;
+  btn.innerHTML='<div class="loading-dots"><span></span><span></span><span></span></div> 生成中，约60秒...';
+  try{
+    var prompts={
+      furniture:'将涂抹的白色区域内的家具替换为'+selectedProduct.name+'，保持室内其他区域不变',
+      wallpaper:'将涂抹的白色区域内的墙面换成'+selectedProduct.name+'壁纸，保持室内其他区域不变',
+      floor:'将涂抹的白色区域内的地面换成'+selectedProduct.name+'，保持室内其他区域不变'
+    };
+    var imgB64=await resizeImage(originalImageDataURL,1024);
+    var maskB64=await resizeImage(getMask(),1024);
+    var body=JSON.stringify({
+      model:'wanx2.1-imageedit',
+      input:{
+        function:'description_edit_with_mask',
+        prompt:prompts[replaceType],
+        base_image_url:imgB64,
+        mask_image_url:maskB64
+      },
+      parameters:{n:1}
+    });
+    var resp=await fetch(PROXY+'/api/v1/services/aigc/image2image/image-synthesis',{
+      method:'POST',
+      headers:{
+        'Authorization':'Bearer '+apiKey,
+        'Content-Type':'application/json',
+        'X-DashScope-Async':'enable'
+      },
+      body:body
+    });
+    var data=await resp.json();
+    if(data.output&&data.output.task_id){
+      await poll(data.output.task_id,apiKey);
+    }else{
+      throw new Error(data.message||JSON.stringify(data));
+    }
+  }catch(err){
+    btn.disabled=false;btn.innerHTML='✨ AI 生成效果图';
+    showToast('失败：'+err.message);
+  }
+}
+
+async function poll(tid,apiKey){
+  for(var i=0;i<40;i++){
+    await new Promise(function(r){setTimeout(r,5000);});
+    var res=await fetch(PROXY+'/api/v1/tasks/'+tid,{headers:{'Authorization':'Bearer '+apiKey}});
+    var d=await res.json();
+    var s=d.output&&d.output.task_status;
+    if(s==='SUCCEEDED'){
+      var url=d.output.results&&d.output.results[0]&&d.output.results[0].url;
+      if(url){showResult(url);return;}
+    }else if(s==='FAILED'){
+      var msg=d.output&&(d.output.message||d.output.code)||'生成失败';
+      throw new Error(msg);
+    }
+  }
+  throw new Error('超时，请重试');
+}
+
+function showResult(url){
+  document.getElementById('resultImg').src=url;
+  document.getElementById('compareOrig').src=originalImageDataURL;
+  document.getElementById('compareResult').src=url;
+  if(selectedProduct){
+    document.getElementById('productInfoRow').style.display='flex';
+    document.getElementById('infoName').textContent=selectedProduct.name;
+    document.getElementById('infoSub').textContent=selectedProduct.desc;
+    document.getElementById('infoPrice').textContent='¥'+selectedProduct.price;
+    document.getElementById('resultBadge').textContent='✓ 已替换为'+selectedProduct.name;
+  }
+  setStep(4);
+}
+function retryGenerate(){setStep(3);selectedProduct=null;document.querySelectorAll('.product-item').forEach(function(el){el.classList.remove('selected');});document.getElementById('generateBtn').disabled=true;document.getElementById('generateBtn').innerHTML='✨ AI 生成效果图';}
+function newPhoto(){originalImageDataURL=null;maskDataURL=null;selectedProduct=null;document.getElementById('photoInput').value='';setStep(1);}
+function shareResult(){var url=document.getElementById('resultImg').src;if(navigator.share){navigator.share({title:'效果图',url:url}).catch(function(){copyLink(url);});}else{copyLink(url);}}
+function copyLink(t){if(navigator.clipboard){navigator.clipboard.writeText(t).then(function(){showToast('链接已复制');});}else{showToast('请长按图片保存');}}
+function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},3000);}
+</script>
+</body>
+</html>
